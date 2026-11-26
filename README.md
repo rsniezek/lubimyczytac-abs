@@ -69,3 +69,41 @@ docker-compose up -d
 6. URL: http://your-ip:3000 or hostname, eg http://lubimyczytac-abs:3000 without trailing slash
 8. Authorization Header Value: whatever, but not blank, for example 00000
 9. Save
+
+## Nix / NixOS
+
+The repository is a flake with a package and a NixOS module.
+
+```nix
+{
+  inputs.lubimyczytac-abs.url = "github:lakafior/lubimyczytac-abs";
+
+  outputs =
+    { self, nixpkgs, lubimyczytac-abs, ... }:
+    {
+      nixosConfigurations.host = nixpkgs.lib.nixosSystem {
+        modules = [
+          lubimyczytac-abs.nixosModules.default
+          {
+            services.lubimyczytac-abs = {
+              enable = true; # 127.0.0.1:3000
+              # port = 3011;
+              # openFirewall = true; # only when host is not loopback
+            };
+          }
+        ];
+      };
+    };
+}
+```
+
+Then add the provider in Audiobookshelf as described above, using
+`http://127.0.0.1:3000` (or your configured port). The service is stateless and
+runs under a dynamic user with a read-only filesystem.
+
+Without NixOS, `nix run github:lakafior/lubimyczytac-abs` starts it on
+`0.0.0.0:3000`; set `HOST` and `PORT` to change the listen address.
+
+Maintaining the packaging — build/check commands, the `npmDepsHash` update
+workflow when `package-lock.json` changes, and where the version comes from — is
+documented in [nix/README.md](nix/README.md).
